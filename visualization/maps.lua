@@ -1,51 +1,51 @@
 -- ===============================================================
--- FUNÇÃO DE VISUALIZAÇÃO DOS MAPAS
+-- MAP DISPLAY FUNCTIONS
 -- ===============================================================
-function mapaUso(espacoCelular, usos, select)
-    local valores, cores, rotulos = {}, {}, {}
+function landUseMap(cellSpace, landUses, select)
+    local values, colors, labels = {}, {}, {}
 
-    for _, uso in pairs(usos) do
-        table.insert(valores, uso.valor)
-        table.insert(cores, uso.cor)
-        table.insert(rotulos, uso.nome)
+    for _, landUse in pairs(landUses) do
+        table.insert(values, landUse.value)
+        table.insert(colors, landUse.color)
+        table.insert(labels, landUse.name)
     end
 
     return Map {
-        target = espacoCelular,
+        target = cellSpace,
         select = select,
-        value = valores,
-        color = cores,
-        label = rotulos
+        value = values,
+        color = colors,
+        label = labels
     }
 end
 
 
 
-function mapaSolo(espacoCelular, tabela_solos, select)
-    local valores = {}
-    local cores = {}
-    local nomes = {}
+function soilMap(cellSpace, soil_classes, select)
+    local values = {}
+    local colors = {}
+    local names = {}
 
-    for _, solo in pairs(tabela_solos) do
-        table.insert(valores, solo.valor)
-        table.insert(cores, solo.cor)
-        table.insert(nomes, solo.nome)
+    for _, soil in pairs(soil_classes) do
+        table.insert(values, soil.value)
+        table.insert(colors, soil.color)
+        table.insert(names, soil.name)
     end
 
     return Map {
-        target = espacoCelular,
+        target = cellSpace,
         select = select,
-        value = valores,
-        color = cores,
-        label = nomes
+        value = values,
+        color = colors,
+        label = names
     }
 end
 
 
 
-function mapaAltitude(espacoCelular,select)
+function altitudeMap(cellSpace,select)
     return Map {
-        target = espacoCelular,
+        target = cellSpace,
         select = select,
         color = "RdYlGn",
         slices = 10,

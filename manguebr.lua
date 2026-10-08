@@ -1,137 +1,143 @@
 -- ===============================================================
--- IMPACTOS DA ELEVAÇÃO DO NÍVEL DO MAR EM ECOSSISTEMAS DE MANGUE
--- AUTOR ORIGINAL: Denilson da Silva Bezerra
--- REVISADO E REESTRUTURADO POR: Sergio Souza Costa
+-- IMPACTS OF SEA-LEVEL RISE ON MANGROVE ECOSYSTEMS (BR-MANGUE)
+-- ORIGINAL AUTHOR: Denilson da Silva Bezerra
+-- REVISED AND RESTRUCTURED BY: Sergio Souza Costa
 -- ===============================================================
 
 
 -- ===============================================================
--- IMPORTAÇÃO DE BIBLIOTECAS
+-- LIBRARIES
 -- ===============================================================
-import("gis")                 -- Biblioteca principal para operações espaciais (GIS)
-require("models/mangue")      -- Modelo de dinâmica de mangue
-require("models/hidro")       -- Modelo de hidrologia
-require("models/utils")       -- Funções utilitárias de apoio
-require("visualization/maps") -- Módulo de visualização e geração de mapas
+import("gis")                 -- Main library for spatial (GIS) operations
+require("models/mangrove")    -- Mangrove dynamics model
+require("models/flood")       -- Flood (hydrology) model
+require("models/utils")       -- Utility functions
+require("visualization/maps") -- Map display
 
 
 
 
 -- ===============================================================
--- DEFINIÇÃO DOS NOMES DOS ATRIBUTOS
+-- ATTRIBUTE NAMES
 -- ===============================================================
--- Define os nomes dos campos no shapefile que serão usados no modelo
-local nomes_atributos = {
-    uso  = "Uso",
-    solo = "Solo",
-    alt  = "Altitude"
+-- Names of the shapefile fields used by the model, written only here: the
+-- models receive this table. The values are the field names of the data
+-- (in Portuguese).
+local attribute_names = {
+    land_use = "Uso",
+    soil     = "Solo",
+    altitude = "Altitude"
 }
 
 
 -- ===============================================================
--- CLASSES DE USO DA TERRA
+-- LAND-USE CLASSES
 -- ===============================================================
--- Cada classe representa um tipo de cobertura ou uso do solo
-tabela_usos = {
-    MANGUE                        = { valor = 1,  cor = {0, 100, 0},      nome = "Mangue" },
-    VEGETACAO_TERRESTRE           = { valor = 2,  cor = {128, 128, 0},    nome = "Vegetação Terrestre" },
-    MAR                           = { valor = 3,  cor = {0, 0, 139},      nome = "Mar" },
-    AREA_ANTROPIZADA              = { valor = 4,  cor = {255, 215, 0},    nome = "Área Antropizada" },
-    SOLO_DESCOBERTO               = { valor = 5,  cor = {255, 222, 173},  nome = "Solo Descoberto" },
-    SOLO_INUNDADO                 = { valor = 6,  cor = {0, 0, 0},        nome = "Solo Inundado" },
-    AREA_ANTROPIZADA_INUNDADA     = { valor = 7,  cor = {50, 50, 50},     nome = "Área Antropizada Inundada" },
-    MANGUE_MIGRADO                = { valor = 8,  cor = {0, 255, 0},      nome = "Mangue Migrado" },
-    MANGUE_INUNDADO               = { valor = 9,  cor = {255, 0, 0},      nome = "Mangue Inundado" },
-    VEGETACAO_TERRESTRE_INUNDADA  = { valor = 10, cor = {0, 0, 0},        nome = "Vegetação Terrestre Inundada" }
+-- Each class is a land cover or land use; the codes are those of the data.
+land_use_classes = {
+    MANGROVE                        = { value = 1,  color = {0, 100, 0},      name = "Mangrove" },
+    TERRESTRIAL_VEGETATION          = { value = 2,  color = {128, 128, 0},    name = "Terrestrial vegetation" },
+    SEA                             = { value = 3,  color = {0, 0, 139},      name = "Sea" },
+    ANTHROPIZED_AREA                = { value = 4,  color = {255, 215, 0},    name = "Anthropized area" },
+    BARE_SOIL                       = { value = 5,  color = {255, 222, 173},  name = "Bare soil" },
+    FLOODED_SOIL                    = { value = 6,  color = {0, 0, 0},        name = "Flooded soil" },
+    FLOODED_ANTHROPIZED_AREA        = { value = 7,  color = {50, 50, 50},     name = "Flooded anthropized area" },
+    MIGRATED_MANGROVE               = { value = 8,  color = {0, 255, 0},      name = "Migrated mangrove" },
+    FLOODED_MANGROVE                = { value = 9,  color = {255, 0, 0},      name = "Flooded mangrove" },
+    FLOODED_TERRESTRIAL_VEGETATION  = { value = 10, color = {0, 0, 0},        name = "Flooded terrestrial vegetation" }
 }
 
 
 -- ===============================================================
--- CLASSES DE SOLO
+-- SOIL CLASSES
 -- ===============================================================
--- Representa diferentes tipos de solo ou substrato na área de estudo
-tabela_solos = {
-    CANAL_FLUVIAL   = { valor = 0, cor = {0, 0, 255},   nome = "Canal Fluvial" },
-    MANGUE          = { valor = 3, cor = {0, 100, 0},   nome = "Mangue" },
-    MANGUE_MIGRADO  = { valor = 9, cor = {34, 139, 34}, nome = "Mangue Migrado" },
-    OUTROS          = { valor = 4, cor = {0, 0, 0},     nome = "Outros" }
+-- Soil or substrate types of the study area
+soil_classes = {
+    RIVER_CHANNEL     = { value = 0, color = {0, 0, 255},     name = "River channel" },
+    RIVERBED          = { value = 1, color = {102, 153, 204}, name = "Riverbed" },      -- no transition rule
+    PODZOLIC          = { value = 2, color = {170, 170, 170}, name = "Podzolic" },      -- no transition rule
+    MANGROVE          = { value = 3, color = {0, 100, 0},     name = "Mangrove mud" },
+    MIGRATED_MANGROVE = { value = 9, color = {34, 139, 34},   name = "Migrated mangrove mud" },
+    OTHER             = { value = 4, color = {0, 0, 0},       name = "Other" }
 }
 
 
 -- ===============================================================
--- CARREGAMENTO DO PROJETO E CRIAÇÃO DO ESPAÇO CELULAR
+-- PROJECT AND CELLULAR SPACE
 -- ===============================================================
--- Carrega o projeto QGIS e define o espaço celular com base no shapefile
-local projeto = Project {
+-- Load the QGIS project and build the cellular space from the shapefile
+local project = Project {
     file = "recorte.qgs",
     cell_usos = "data/teste_dinamica/Recorte_Teste.shp",
     clean = true
 }
 
--- Cria o espaço celular com os atributos definidos
-local espacoCelular = CellularSpace {
-    project = projeto,
+-- Cellular space with the selected attributes
+local cellSpace = CellularSpace {
+    project = project,
     layer   = "cell_usos",
     xy      = { "Col", "Lin" },
-    select  = nomes_atributos
+    select  = attribute_names
 }
 
--- Define a vizinhança de Moore (8 vizinhos) e sincroniza o estado inicial
-espacoCelular:createNeighborhood { strategy = "moore", self = false }
-espacoCelular:synchronize()
+-- Moore neighbourhood (8 neighbours) and initial state
+cellSpace:createNeighborhood { strategy = "moore", self = false }
+cellSpace:synchronize()
 
-local hidro_model = Hidro(espacoCelular, tabela_usos, nomes_atributos)
-local mangue_model = Mangue(espacoCelular, tabela_solos, tabela_usos, nomes_atributos)
+local flood_model = Flood(cellSpace, land_use_classes, attribute_names)
+local mangrove_model = Mangrove(cellSpace, soil_classes, land_use_classes, attribute_names)
 
 
 -- ===============================================================
--- CONSTANTES DO MODELO
+-- MODEL CONSTANTS
 -- ===============================================================
--- Taxa de elevação do nível do mar (em metros/ano, por exemplo)
-local TAXA_ELEVACAO_MAR = 0.5
-local ALTURA_MARE = 6
+-- Sea-level rise rate (metres per time step)
+local SEA_LEVEL_RISE_RATE = 0.5
+local TIDE_HEIGHT = 6
 local FINAL_TIME = 11
 
 -- ===============================================================
--- AMBIENTE DE SIMULAÇÃO
+-- SIMULATION ENVIRONMENT
 -- ===============================================================
--- Criação do ambiente principal com os modelos e processos envolvidos
+-- The keys "hidro" and "mangue" are kept on purpose: TerraME visits the
+-- Environment table with pairs(), so the key names decide the order in
+-- which the two models run in each step, and that order changes the results.
 local env = Environment {
-    
-    -- Modelos de dinâmica
-    hidro  =  hidro_model{ 
-            finalTime = FINAL_TIME, 
-            taxaElevacaoMar = TAXA_ELEVACAO_MAR 
+
+    -- Dynamic models
+    hidro  =  flood_model{
+            finalTime = FINAL_TIME,
+            seaLevelRiseRate = SEA_LEVEL_RISE_RATE
     },
-    mangue =  mangue_model{ 
-            finalTime = FINAL_TIME, 
-            taxaElevacaoMar = TAXA_ELEVACAO_MAR, alturaMare = ALTURA_MARE 
+    mangue =  mangrove_model{
+            finalTime = FINAL_TIME,
+            seaLevelRiseRate = SEA_LEVEL_RISE_RATE, tideHeight = TIDE_HEIGHT
     },
 
-    -- Cálculo inicial da altitude média
-    -- usado para verificar se o aumento do nivel do mar esta funcionando
-    --CalcularAltitudeMedia(espacoCelular, nomes_atributos) {}
+    -- Mean altitude per step,
+    -- used to check that sea-level rise is working
+    --MeanAltitude(cellSpace, attribute_names) {}
 }
 
 
 -- ===============================================================
--- MAPAS E VISUALIZAÇÃO
+-- MAPS
 -- ===============================================================
--- Adiciona diretamente ao ambiente os mapas temáticos de uso, solo e altitude
+-- Thematic maps of land use, soil and altitude
 
-env:add(Event { action = mapaUso(espacoCelular, tabela_usos, nomes_atributos.uso) })
-env:add(Event { action = mapaSolo(espacoCelular, tabela_solos, nomes_atributos.solo) })
-env:add(Event { action = mapaAltitude(espacoCelular, nomes_atributos.alt) })
+env:add(Event { action = landUseMap(cellSpace, land_use_classes, attribute_names.land_use) })
+env:add(Event { action = soilMap(cellSpace, soil_classes, attribute_names.soil) })
+env:add(Event { action = altitudeMap(cellSpace, attribute_names.altitude) })
 
--- Sincronização periódica do espaço celular durante a simulação
-env:add(Event { action = function() espacoCelular:synchronize() end })
+-- Synchronise the cellular space at every step
+env:add(Event { action = function() cellSpace:synchronize() end })
 
 
 -- ===============================================================
--- EXECUÇÃO DA SIMULAÇÃO
+-- RUN
 -- ===============================================================
--- Inicia a simulação completa
--- (para modo interativo, descomente a linha abaixo)
---env:add(Event { action = function() print("Pressione ENTER para continuar...") io.read() end })
+-- Run the whole simulation
+-- (for step-by-step mode, uncomment the line below)
+--env:add(Event { action = function() print("Press ENTER to continue...") io.read() end })
 
 env:run()
