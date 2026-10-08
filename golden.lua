@@ -3,7 +3,7 @@
 -- state after the first step, and so on (the convention of the golden files used by
 -- brmangue-dissmodel).
 --
--- Parameters (environment variables):  TAXA (m/step, default 0.05)  FINAL (steps, default 18)
+-- Parameters (environment variables):  TAXA (m/step, default 0.05)  FINAL (steps, default 19)
 --   MARE (tide height, default 6)  OUT (output dir, default out)  SHP (shapefile)
 -- Use `make golden` (Docker) rather than calling this file directly.
 import("gis")
@@ -12,7 +12,7 @@ require("models/hidro")
 require("models/utils")
 
 local TAXA   = tonumber(os.getenv("TAXA"))   or 0.05
-local FINAL  = tonumber(os.getenv("FINAL"))  or 18
+local FINAL  = tonumber(os.getenv("FINAL"))  or 19
 local MARE   = tonumber(os.getenv("MARE"))   or 6
 local OUT    = os.getenv("OUT") or "out"
 local SHP    = os.getenv("SHP") or "data/ilha/elevacao_pol.shp"
@@ -49,13 +49,15 @@ local function dump(n)
 end
 
 os.execute("mkdir -p " .. OUT)
-dump(1)
-local k = 1
+-- In every cycle the dump runs BEFORE the models step, so cycle 1 captures the initial
+-- state (step_01) and cycle n the state after n-1 steps. The models therefore run
+-- FINAL+1 cycles so that step_(FINAL+1).csv is the state after FINAL steps.
+local k = 0
 local env = Environment {
-    hidro  = hidro_model{ finalTime = FINAL, taxaElevacaoMar = TAXA },
-    mangue = mangue_model{ finalTime = FINAL, taxaElevacaoMar = TAXA, alturaMare = MARE },
+    hidro  = hidro_model{ finalTime = FINAL + 1, taxaElevacaoMar = TAXA },
+    mangue = mangue_model{ finalTime = FINAL + 1, taxaElevacaoMar = TAXA, alturaMare = MARE },
 }
 env:add(Event { action = function() cs:synchronize() end })
 env:add(Event { action = function() k = k + 1; dump(k) end })
 env:run()
-print("steps dumped:", k)
+print("files written:", k)

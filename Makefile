@@ -2,14 +2,14 @@
 # (uso, solo, alt of every cell, initial state first) used by brmangue-dissmodel.
 #
 #   make data                          download the Maranhão Island cells (once)
-#   make golden TAXA=0.05 FINAL=18     baseline scenario  -> golden/step_01.csv ...
+#   make golden TAXA=0.05 FINAL=19     baseline scenario  -> golden/step_01.csv ...
 #   make golden TAXA=0.5  FINAL=11 OUT=golden_flood     flooding scenario
 #
 # Requires Docker. Pin the image for reproducible results, e.g.
 #   make golden IMAGE=profsergiocosta/terrame-luccme:0.4.2
 IMAGE ?= profsergiocosta/terrame-luccme
 TAXA  ?= 0.05
-FINAL ?= 18
+FINAL ?= 19
 MARE  ?= 6
 OUT   ?= golden
 DATA_URL ?= https://raw.githubusercontent.com/DisSModel/brmangue-dissmodel/v0.3.0/examples/data/input/elevacao_pol.zip

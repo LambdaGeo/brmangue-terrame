@@ -40,11 +40,11 @@ The model has been successfully applied to simulate sea-level rise impacts in vu
 
 `golden.lua` runs `hidro` + `mangue` without a graphical interface and writes the
 `uso`, `solo` and `alt` of every cell, the initial state first (`step_01.csv` is the
-state before the first step). These files are the reference used to validate
+initial state and `step_NN.csv` the state after NN-1 steps, so `FINAL=19` writes 20 files). These files are the reference used to validate
 [`brmangue-dissmodel`](https://github.com/DisSModel/brmangue-dissmodel).
 
 ```bash
-make golden TAXA=0.05 FINAL=18                         # baseline  -> golden/
+make golden TAXA=0.05 FINAL=19                         # baseline  -> golden/
 make golden TAXA=0.5 FINAL=11 OUT=golden_flood         # flooding  -> golden_flood/
 make golden IMAGE=profsergiocosta/terrame-luccme:0.4.2 # pin the image
 ```
