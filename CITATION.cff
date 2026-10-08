@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "brmangue-terrame: BR-MANGUE adapted to TerraME 2.0, with a headless driver for reference outputs"
+abstract: >-
+  Adaptation of the BR-MANGUE coupled flood and mangrove model (Bezerra, 2014)
+  to TerraME 2.0, with a headless driver (golden.lua) that writes the per-step
+  reference outputs used to validate the Python re-implementation
+  brmangue-dissmodel.
+authors:
+  - family-names: "Costa"
+    given-names: "Sérgio Souza"
+    orcid: "https://orcid.org/0000-0002-0232-4549"
+  - family-names: "Bezerra"
+    given-names: "Denilson da Silva"
+    orcid: "https://orcid.org/0000-0002-9567-7828"
+version: 0.1.0
+date-released: "2026-10-08"
+license: MIT
+url: "https://github.com/LambdaGeo/brmangue-terrame"
+repository-code: "https://github.com/LambdaGeo/brmangue-terrame"
+keywords:
+  - mangrove
+  - sea-level rise
+  - TerraME
+  - cellular automata
+  - BR-MANGUE
+type: software
+references:
+  - type: software
+    title: "brmangue-dissmodel: The BR-MANGUE coupled flood and mangrove succession model for DisSModel"
+    authors:
+      - family-names: "Bezerra"
+        given-names: "Denilson da Silva"
+      - family-names: "Sousa"
+        given-names: "Felipe Martins"
+      - family-names: "Costa"
+        given-names: "Sérgio Souza"
+    url: "https://github.com/DisSModel/brmangue-dissmodel"
