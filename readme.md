@@ -35,3 +35,24 @@ The model has been successfully applied to simulate sea-level rise impacts in vu
 * Bezerra, D. S. (2014). *Modelagem da dinâmica do manguezal frente à elevação do nível do mar*. INPE [36, 37].
 * Bezerra, D. S. et al. (2014). *Simulating Sea-Level Rise Impacts on Mangrove Ecosystem adjacent to Anthropic Areas: the case of Maranhão Island, Brazilian Northeast*. Pan-American Journal of Aquatic Sciences [33, 38].
 * Bezerra, D. S. et al. (2025). *Spatially Explicit Modeling for Impacts of Sea-Leve
+
+## Running headless with Docker (golden files)
+
+`golden.lua` runs `hidro` + `mangue` without a graphical interface and writes the
+`uso`, `solo` and `alt` of every cell, the initial state first (`step_01.csv` is the
+state before the first step). These files are the reference used to validate
+[`brmangue-dissmodel`](https://github.com/DisSModel/brmangue-dissmodel).
+
+```bash
+make golden TAXA=0.05 FINAL=18                         # baseline  -> golden/
+make golden TAXA=0.5 FINAL=11 OUT=golden_flood         # flooding  -> golden_flood/
+make golden IMAGE=profsergiocosta/terrame-luccme:0.4.2 # pin the image
+```
+
+It uses the [`terrame-docker`](https://github.com/LambdaGeo/terrame-docker) image
+(TerraME 2.0.1) and downloads the Maranhão Island cells once (`make data`).
+
+> **Note.** This code is an *adaptation* to TerraME 2.0 of the BR-MANGUE model
+> (Bezerra, 2014); it is not the original published script. See
+> `docs/model-fidelity.md` in `brmangue-dissmodel` for how the rules relate to
+> the thesis.
